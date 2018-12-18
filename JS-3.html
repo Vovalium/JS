@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Матрица</title>
+</head>
+<body>
+	<p>Поменять местами элементы (2 столбец и строку с макс. суммой)</p>
+	<button onclick="randFill(8)">Создать</button>
+	<button onclick="swap()">Поменять</button>
+	
+	<table id="matrixTable">
+	
+	</table>
+	
+	<script>
+	var matrix = init(8)
+	
+	function init(size) {
+		var matrix = [];
+		for(var i=0; i<size; i++) {
+			matrix[i] = [];
+			for(var j=0; j<size; j++) {
+				matrix[i][j] = getRandomInt();
+			}
+		}
+		return matrix;
+	}
+	
+	function getRandomInt() {
+		var max = 100;
+		var min = 0;
+		return Math.floor(Math.random() * (max - min) + min);
+	}
+	
+	function displayTable(array) {
+		var table = document.getElementById('matrixTable');
+		for(var i=0; i<array.length; i++) {
+			var row = table.insertRow(0);
+			for(var j=0; j<array[i].length; j++){
+				var cell = row.insertCell(0);
+				cell.innerHTML = matrix[i][j];
+			}
+		}
+	}
+	
+	function randFill(size) {
+		for(var i=0; i<size; i++) {
+			for(var j=0; j<size; j++) {
+				matrix[i][j] = getRandomInt();
+			}
+		}
+		var table = document.getElementById('matrixTable');
+		for(var i=0; i<size; i++) {
+			table.deleteRow(0);
+		}
+		
+		displayTable(matrix);
+	}
+	
+	function swap() {
+		var vmax = 0;
+		var v = 0;
+		var size = 8;
+		var row = 0;
+		
+		var matrixT = Array(8).fill().map(()=>Array(8).fill())
+		
+		for(var i=0; i<size; i++) {
+			v = 0;
+			for(var j=0; j<size; j++) {
+				v += matrix[i][j];
+				matrixT[i][j] = matrix[i][j]
+			}
+			if (v > vmax) {
+				vmax = v;
+				row = i;
+			}
+		}
+		
+		for(var i=0; i<size; i++) {
+			matrixT[row][i] = matrix[i][6];
+			matrixT[i][6] = matrix[row][i];
+		}
+		
+		matrix = matrixT;
+		var table = document.getElementById('matrixTable');
+		for(var i=0; i<size; i++) {
+			table.deleteRow(0);
+		}
+		
+		displayTable(matrix);
+	}
+	
+	window.onload = displayTable(matrix);
+	</script>
+	
+</body>
+</html>

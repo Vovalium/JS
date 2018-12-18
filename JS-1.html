@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Объем круга</title>
+</head>
+<body>
+	<p>Найти объем круга</p>
+	<form action="" method="post" id="MyForm">
+		Радиус </label><input type="text" name="radius" id="radius" required><br><br>
+	</form>
+	
+	<button onclick="volume_circ()">Посчитать</button>
+	
+	<script>
+	function volume_circ()
+	{
+		var volume;
+		var radius = document.getElementById('radius').value;
+		volume = Math.PI * Math.pow(radius, 2);
+		volume = volume.toFixed(4);
+		console.log(volume);
+	}
+	</script>
+	
+</body>
+</html>
