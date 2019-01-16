@@ -3,52 +3,144 @@
 	<title>Canvas & Mootools</title>
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mootools/1.6.0/mootools-core.js"></script>
 	<script type="text/javascript">
-		var canvas, ctx, shapes, holes, idTimer, cueX, cueY, fric;
-		fric = 0.002;
+		var canvas, ctx, balls, holes, idTimer, cueX, cueY, cueDir, cueNear, cueDist, cueX, cueY;
+		var fric = 0.002;
+		var strokes = 10;
+		var score = 0;
+		var level = 1;
+		var combo = 0;
+		var charging = 0;
 		
 		TBall = new Class({
-			initialize: function(pX,pY,group) {
+			initialize: function(pX,pY,group,active) {
 				this.posX = pX; //позиция шарика по X
 				this.posY = pY; //позиция шарика по Y
-				//цвет шарика, формируется случайным оьразом
-				this.colHue = group * 35;
+				this.group = group;
+				//цвет шарика=
+				if (this.group == 0) this.colHue = 130
+				else if (this.group == 1) this.colHue = 50
+				else if (this.group == 2) this.colHue = 210
+				else if (this.group == 3) this.colHue = 170
+				else if (this.group == 4) this.colHue = 0
+				else if (this.group == 5) this.colHue = 250
+				else if (this.group == 6) this.colHue = 140
+				else if (this.group == 7) this.colHue = 290
+				else if (this.group == 8) this.colHue = 320;
 				this.col = 'hsl('+this.colHue+',100%,55%)';
-				this.size = 10;
+				this.size = 12;
 				this.spdX = 0;
 				this.spdY = 0;
-				this.group = group;
+				this.active = active;
 			},
 			posX: 0,
 			posY: 0,
 			col:"rgb(0,0,0)",
 			size: 0,
 			group: 0,
+			active: 1,
 			draw : function(ctx){
 				// рисуем шарик на canvas
 				with (this){
+					if (this.group == 0) this.colHue = 130
+					else if (this.group == 1) this.colHue = 50
+					else if (this.group == 2) this.colHue = 210
+					else if (this.group == 3) this.colHue = 170
+					else if (this.group == 4) this.colHue = 0
+					else if (this.group == 5) this.colHue = 250
+					else if (this.group == 6) this.colHue = 140
+					else if (this.group == 7) this.colHue = 290
+					else if (this.group == 8) this.colHue = 320;
+					this.col = 'hsl('+this.colHue+',100%,55%)';
+				
 					ctx.fillStyle = this.col;
 					ctx.beginPath();
 					ctx.arc(posX, posY, size, 0, 2*Math.PI, false);
 					ctx.closePath();
 					ctx.fill();
+					
+					if ((group == 1) || (group == 4) || (group == 7)) {
+						ctx.strokeStyle = 'black';
+						ctx.lineWidth = (2+group)/2;
+						ctx.beginPath();
+						ctx.arc(posX, posY, size * 0.7, 0, 2*Math.PI, false);
+						ctx.closePath();
+						ctx.stroke();
+					}
+					
+					if ((group == 2) || (group == 5)) {
+						ctx.strokeStyle = 'gold';
+						ctx.lineWidth = 1;
+						
+						ctx.beginPath();
+						ctx.arc(posX, posY, size * 0.7, 0, 2*Math.PI, false);
+						ctx.closePath();
+						ctx.stroke();
+						
+						ctx.beginPath();
+						ctx.arc(posX, posY, size * 0.3, 0, 2*Math.PI, false);
+						ctx.closePath();
+						ctx.stroke();
+					}
+					
+					if (group == 5) {
+						ctx.strokeStyle = 'gold';
+						ctx.lineWidth = 1;
+						
+						ctx.beginPath();
+						ctx.arc(posX, posY, size * 0.9, 0, 2*Math.PI, false);
+						ctx.closePath();
+						ctx.stroke();
+					}
+					
+					if (group == 6) {
+						ctx.strokeStyle = 'white';
+						ctx.lineWidth = 3;
+						
+						ctx.beginPath();
+						ctx.arc(posX, posY, size * 0.4, 0, 2*Math.PI, false);
+						ctx.closePath();
+						ctx.stroke();
+						
+						ctx.beginPath();
+						ctx.arc(posX, posY, size * 0.7, 0, 2*Math.PI, false);
+						ctx.closePath();
+						ctx.stroke();
+					}
+					
+					if (group == 8) {
+						ctx.strokeStyle = 'gold';
+						ctx.lineWidth = 3;
+						ctx.beginPath();
+						ctx.arc(posX, posY, size * 0.8, 0, 2*Math.PI, false);
+						ctx.closePath();
+						ctx.stroke();
+					}
 				}
 			}
 		});
 		
 		THole = new Class({
 			initialize: function(pX,pY) {
-				this.posX = pX; //позиция шарика по X
-				this.posY = pY; //позиция шарика по Y
-				//цвет шарика, формируется случайным оьразом
+				this.posX = pX;
+				this.posY = pY;
 				this.size = 20;
 			},
 			posX: 0,
 			posY: 0,
 			size: 0,
-			draw : function(ctx){
-				// рисуем шарик на canvas
+			colorShape: function(ctx){
+				// формируем градиентную заливку
 				with (this){
-					ctx.fillStyle = '#000';
+					var gradient = ctx.createRadialGradient(posX, posY+size/2, size*0.3, posX, posY, size);
+					gradient.addColorStop(0, '#000');
+					gradient.addColorStop(0.85, '#222');
+					return gradient;
+				}
+			},
+			draw : function(ctx){
+				// рисуем лунку на canvas
+				with (this){
+					ctx.fillStyle = colorShape(ctx);
 					ctx.beginPath();
 					ctx.arc(posX, posY, size, 0, 2*Math.PI, false);
 					ctx.closePath();
@@ -73,33 +165,37 @@
 			if (canvas.getContext){
 				ctx = canvas.getContext('2d');
 				//рисуем фон
-				drawBack(ctx,'#202020','#101010',canvas.width,canvas.height);
+				drawBack(ctx,'#404040','#303030',canvas.width,canvas.height);
 				//создаем 10 шариков, заноси их в массив и выводим на canvas
-				shapes = [];
+				balls = [];
 				holes = [];
-				for (var i = 1; i<=15;i++){
-					createShape();
+				for (var i = 1; i<=10;i++){
+					createShape(0);
 				}
 				
-				for (var i = 1; i<=6;i++){
-					createHole();
+				for (var i = 1; i<=2;i++){
+					createShape(1);
+				}
+				
+				for (var i = 1; i<=4;i++){
+					createHole(canvas.width/2 + Math.cos(Math.PI*i*0.5+Math.PI*0.25)*180, canvas.height/2 + Math.sin(Math.PI*i*0.5+Math.PI*0.25)*120);
 				}
 			}
 		}
 		
-		// создаем новый шарик по щелчку мыши, добавляем его в массив шариков и рисуем его
+		//Удар
 		function cueCharge(event){
 			cueX = event.clientX;
 			cueY = event.clientY;
-		}
-		
-		function cueRelease(event){
+			charging = 1;
+			
 			var distM = 10000;
 			var dirM = 0;
 			var nearest = -1;
-			for (var i = 0; i < shapes.length;i++){
-				var x1 = shapes[i].posX	;				
-				var y1 = shapes[i].posY;
+			
+			for (var i = 0; i < balls.length;i++){
+				var x1 = balls[i].posX;				
+				var y1 = balls[i].posY;
 				
 				var x2 = cueX;
 				var y2 = cueY;
@@ -119,34 +215,79 @@
 					nearest = i;
 				}
 			}
-			
-			var x1 = shapes[nearest].posX	;				
-			var y1 = shapes[nearest].posY;
-			
-			var x2 = event.clientX;
-			var y2 = event.clientY;
-			
-			var xd = Math.abs(x1 - x2);
-			
-			var yd = Math.abs(y1 - y2);
-			
-			var dist = Math.sqrt(Math.pow(xd, 2) + Math.pow(yd,2));
-			var dir = Math.atan2(y2 - y1, x2 - x1);
-			
-			if (dist > 200) dist = 200;
-			
-			shapes[nearest].spdX = -Math.cos(dir) * distM * 0.1;
-			shapes[nearest].spdY = -Math.sin(dir) * distM * 0.1;
-			
+			if ((distM >= 30) || (strokes <= 0) || 
+			(balls[nearest].group == 1) || (balls[nearest].group == 4) || (balls[nearest].group >= 7))
+				charging = 0;
+				
+			cueDist = distM;
+			cueDir = dirM;
+			cueNear = nearest;
 		}
 		
-		function createShape(x, y) {
+		function cueRelease(event){
+			distM = cueDist;
+			dirM = cueDir;
+			nearest = cueNear;
+			
+			if ((distM < 30) && (strokes > 0) && (charging == 1) &&
+			(balls[nearest].group != 1) && (balls[nearest].group != 4) && (balls[nearest].group < 7) &&
+			((Math.abs(balls[cueNear].posX - cueX) > 20) || (Math.abs(balls[cueNear].posY - cueY) > 20))) {
+				var x1 = balls[nearest].posX;				
+				var y1 = balls[nearest].posY;
+				
+				var x2 = event.clientX;
+				var y2 = event.clientY;
+				
+				var xd = Math.abs(x1 - x2);
+				
+				var yd = Math.abs(y1 - y2);
+				
+				var dist = Math.sqrt(Math.pow(xd, 2) + Math.pow(yd,2));
+				var dir = Math.atan2(y2 - y1, x2 - x1);
+				
+				balls[nearest].spdX = -Math.cos(dir) * dist * 0.015;
+				balls[nearest].spdY = -Math.sin(dir) * dist * 0.015;
+				
+				strokes -= 1;
+			}
+			charging = 0;
+		}
+		
+		function createShape(group, x, y) {
 			var rng = Math.random();
-			var x = x || Math.random()*(canvas.width-30);
-			var y = y || Math.random()*(canvas.height-30);
-			var item = new TBall(x,y,Math.floor(Math.random()*10)+1);
+			x = Math.random()*(canvas.width-30);
+			y = Math.random()*(canvas.height-30);
+			var item = new TBall(x,y,group);
 			item.draw(ctx);
-			shapes.push(item);
+			balls.push(item);
+		}
+		
+		//Добавление шаров
+		function spawn() {
+			var rng = Math.random()*2;
+			if (rng < 1) {
+				x = -12.5;
+				y = Math.random()*(canvas.height);
+				xspd = (Math.random()*0.5+0.5);
+				yspd = (Math.random()*0.5-0.25);
+				if (Math.floor(Math.random()*2) == 1) xspd *= -1;
+			} else {
+				y = -12.5;
+				x = Math.random()*(canvas.width);
+				yspd = Math.random()*0.5+0.5;
+				xspd = (Math.random()*0.5-0.25);
+				if (Math.floor(Math.random()*2) == 1) yspd *= -1;
+			};
+			
+			if (level <= 9)
+				var ball = Math.min(Math.floor(Math.random()*level) , Math.floor(Math.random()*level)+2) 
+			else
+				var ball = Math.min(Math.floor(Math.random()*9), Math.floor(Math.random()*level))
+			var item = new TBall(x,y,ball);
+			item.spdX = xspd;
+			item.spdY = yspd;
+			item.draw(ctx);
+			balls.push(item);
 		}
 		
 		function createHole(x, y) {
@@ -158,79 +299,243 @@
 			holes.push(item);
 		}
 		
+		//отрисовка канваса
 		function render(){
-			drawBack(ctx,'#202020','#101010',canvas.width,canvas.height);
+			drawBack(ctx,'#404040','#404040',canvas.width,canvas.height);
 		
 			for (var i = 0; i < holes.length;i++)
 				holes[i].draw(ctx);
 		
-			for (var i = 0; i < shapes.length;i++)
-				shapes[i].draw(ctx);
+			if (charging == 1) {
+				var gradient = ctx.createLinearGradient(balls[cueNear].posX, balls[cueNear].posY, cueX, cueY);
+				gradient.addColorStop("0", "white");
+				gradient.addColorStop("1.0", "#404040");
+			
+				ctx.strokeStyle = gradient;
+				ctx.lineWidth = 3;
+				ctx.beginPath();
+				ctx.moveTo(balls[cueNear].posX, balls[cueNear].posY);
+				ctx.lineTo(cueX, cueY);
+				ctx.closePath();
+				ctx.stroke();
+			}
+		
+			for (var i = 0; i < balls.length;i++)
+				balls[i].draw(ctx);
+			
+			ctx.font = "20px Arial";
+			if (strokes > 0)
+				ctx.fillStyle = '#FFF'
+			else
+				ctx.fillStyle = '#F33';
+			ctx.textAlign = "left";
+			ctx.fillText("Удары: " +strokes, 10, 20);
+			
+			ctx.textAlign = "right";
+			ctx.fillText("Очки: " +score, canvas.width-10, 20);
+			ctx.font = "16px Arial";
+			//ctx.fillText("Комбо: " +combo, canvas.width-10, 36);
+			
+			ctx.font = "30px Arial";
+			ctx.fillStyle = '#FFF';
+			ctx.textAlign = "center";
+			ctx.fillText("Уровень: " +level, canvas.width/2, 25);
+			
+			if (strokes == 0) {
+				var stop = 1;
+				for (var i = 0; i < balls.length;i++) {
+					if ((balls[i].spdX > 0) || (balls[i].spdY > 0))
+						stop = 0
+				}
+				if (stop == 1) {
+					ctx.font = "60px Arial";
+					ctx.fillStyle = '#FFF';
+					ctx.textAlign = "center";
+					ctx.fillText("Конец игры", canvas.width/2, canvas.height/2);
+					
+					ctx.font = "40px Arial";
+					ctx.fillStyle = '#FFF';
+					ctx.textAlign = "center";
+					ctx.fillText("Итоговый счет: " +score, canvas.width/2, canvas.height/2+60);
+				}
+			}
+		};
+		
+		function cueAim(event) {
+			if (charging == 1) {
+				cueX = event.clientX;
+				cueY = event.clientY;
+			}
 		}
 		
 		function moveBall(){
-			//реализация движения шариков, находящихся в массиве shapes
-			for (var i = 0; i < shapes.length;i++){
-				shapes[i].posX = shapes[i].posX + shapes[i].spdX;
-				shapes[i].posY = shapes[i].posY + shapes[i].spdY;
+			//реализация движения шариков
+			for (var i = 0; i < balls.length;i++){
+				var x1 = balls[i].posX	+ balls[i].spdX;				
+				var y1 = balls[i].posY + balls[i].spdY;
+
+				if (x1 < 0 - 12) x1 += canvas.width + 23
+				else if (x1 > canvas.width + 12) x1 -= canvas.width + 23
 				
-				shapes[i].posX = (shapes[i].posX + canvas.width) % canvas.width;
-				shapes[i].posY = (shapes[i].posY + canvas.height) % canvas.height;
+				if (y1 < 0 - 12) y1 += canvas.height + 23
+				else if (y1 > canvas.height + 12) y1 -= canvas.height + 23
 				
-				var x1 = shapes[i].posX					
-				var y1 = shapes[i].posY
+				balls[i].posX = x1;
+				balls[i].posY = y1;
 				
 				//Торможение
-				var spd = Math.sqrt(Math.pow(shapes[i].spdX, 2) + Math.pow(shapes[i].spdY,2));
-				var dir = Math.atan2(shapes[i].spdY, shapes[i].spdX);
+				var spd = Math.sqrt(Math.pow(balls[i].spdX, 2) + Math.pow(balls[i].spdY,2));
+				var dir = Math.atan2(balls[i].spdY, balls[i].spdX);
 				
 				if (spd > fric) {
-					if (spd > fric * 2000)
-						spd = fric * 2000;
+					if (spd > fric * 1000)
+						spd = fric * 1000;
 					spd -= fric;
-					shapes[i].spdX = Math.cos(dir) * spd;
-					shapes[i].spdY = Math.sin(dir) * spd;
+					balls[i].spdX = Math.cos(dir) * spd;
+					balls[i].spdY = Math.sin(dir) * spd;
 				}
 				else {
-					shapes[i].spdX = 0;
-					shapes[i].spdY = 0;
+					balls[i].spdX = 0;
+					balls[i].spdY = 0;
 				}
 				
 				//Физика шаров
-				for (var j = 0; j < shapes.length;j++) if( i != j) {
-					var x2 = shapes[j].posX
-					var y2 = shapes[j].posY
+				var x1 = balls[i].posX					
+				var y1 = balls[i].posY
+				
+				for (var j = 0; j < balls.length;j++) if( i < j) {
+					var x2 = balls[j].posX
+					var y2 = balls[j].posY
 					
 					var dist = Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2,2));
 					var dir = Math.atan2(y2-y1, x2-x1);
 					
-					if (dist < shapes[i].size * 2) {
+					if (dist <= balls[i].size * 2) {
 					
-						var spdX = shapes[i].spdX + shapes[j].spdX 
-						var spdY = shapes[i].spdY + shapes[j].spdY 
-					
-						var spd = Math.sqrt(Math.pow(spdX, 2) + Math.pow(spdY,2));
-					
-						shapes[i].spdX = -Math.cos(dir) * spd / 2;
-						shapes[i].spdY = -Math.sin(dir) * spd / 2;
-						shapes[j].spdX = Math.cos(dir) * spd / 2;
-						shapes[j].spdY = Math.sin(dir) * spd / 2;
+						if ((balls[i].group == balls[j].group) && ((balls[j].group == 1) || (balls[j].group == 4) || (balls[j].group == 7))) {
+							score += balls[j].group * 10
+						
+							if (i > j) {
+								balls.splice(i,1);
+								balls.splice(j,1);
+							} else {
+								balls.splice(j,1);
+								balls.splice(i,1);
+							}
+						}
+						else 
+						{
+							//Плохие шары
+							if ((balls[j].group == 4) && (balls[i].group == 0))
+								balls[i].group = 1;
+								
+							if ((balls[j].group == 7) && ((balls[i].group == 3) || (balls[i].group == 2)))
+								balls[i].group = 4;
+								
+							if ((balls[j].group == 7) && (balls[i].group == 0))
+								balls[i].group = 1;
+						
+							var spdX = balls[i].spdX + balls[j].spdX - (dist - balls[i].size * 2) * 0.1
+							var spdY = balls[i].spdY + balls[j].spdY - (dist - balls[i].size * 2) * 0.1
+						
+							var spd = Math.sqrt(Math.pow(spdX, 2) + Math.pow(spdY,2));
+							var spdD = Math.atan2(spdX, spdY);
+							
+							var boost1 = 1;
+							var boost2 = 1;
+							
+							if (balls[i].group == 3)
+								boost1 += 1;
+							if (balls[i].group == 6)
+								boost2 += 2;
+							if (balls[j].group == 3)
+								boost2 += 1;
+							if (balls[j].group == 6)
+								boost1 += 2;
+							if (balls[j].group == 4)
+								boost2 += 1;
+							if (balls[j].group == 4)
+								boost1 += 1;
+							if (balls[j].group == 7)
+								boost2 += 1;
+							if (balls[j].group == 7)
+								boost1 += 1;
+							
+							balls[i].spdX = -Math.cos(dir) * (Math.abs(spdX)+0.1) / 2 * boost1;
+							balls[i].spdY = -Math.sin(dir) * (Math.abs(spdY)+0.1) / 2 * boost1;
+							balls[j].spdX = Math.cos(dir) * (Math.abs(spdX)+0.1) / 2 * boost2;
+							balls[j].spdY = Math.sin(dir) * (Math.abs(spdY)+0.1) / 2 * boost2;
+						}
 					}
 				}
 			//Лунки
 				for (var j = 0; j < holes.length;j++) {	
-					if (Math.sqrt(Math.pow(holes[j].posX - x1,2)+Math.pow(holes[j].posY - y1,2)) < 20)
-						shapes.splice(i,1);
+					if (Math.sqrt(Math.pow(holes[j].posX - x1,2)+Math.pow(holes[j].posY - y1,2)) < 20) {
+					
+						scoreL = score;
+						//Простой шар
+						if (balls[i].group == 0) {
+							score += 10 + combo;
+							strokes += 1;
+						}
+						//Плохой шар
+						if (balls[i].group == 1) {
+							score -= 30;
+							strokes -= 1;
+							combo = 0;
+						}
+						//Дорогой шар
+						if (balls[i].group == 2) {
+							score += 30 + combo;
+							strokes += 3;
+						}
+						//Прыгучий шар
+						if (balls[i].group == 3) {
+							score += 20 + combo;
+							strokes += 1;
+						}
+						//Злой шар
+						if (balls[i].group == 4) {
+							score -= 100;
+							strokes -= 5;
+							combo = 0;
+						}
+						//Супер шар
+						if (balls[i].group == 5) {
+							score += 100;
+							strokes += 5;
+						}
+						//Сильный шар
+						if (balls[i].group == 6) {
+							score += 30;
+							strokes += 1;
+						}
+						//Убийца шар
+						if (balls[i].group == 7) {
+							score -= 1000;
+							strokes -= 10;
+							combo = 0;
+						}
+						//Тяжелый шар
+						if (balls[i].group == 8) {
+							score += 500;
+							strokes += 10;
+						}
+						
+						if (strokes < 0) strokes = 0;
+						if (score < 0) score = 0;
+						
+						balls.splice(i,1);
+					}
 				}		
 			}
-		}
-		
-		function moveNO(){
-			for (var i = 0; i < shapes.length;i++){
-				shapes[i].spdX = 0;
-				shapes[i].spdY = 0;
-			}
-			clearInterval(ChaosTimer);
+			
+			//Доп. шары
+			if ((balls.length <= 10 + Math.floor(Math.pow(level,1.4))) && (charging == 0))
+				spawn();
+				
+			if (level < Math.floor(Math.sqrt(score / 10)))
+				level += 1;
 		}
 		
 	idTimer = setInterval('moveBall();',5);
@@ -242,10 +547,7 @@
 	</style>
 </head>
 <body onload="init();">
-	<canvas id="canvas" width="900" height="600" onMouseDown="cueCharge(event)" onMouseUp="cueRelease(event)";>
+	<canvas id="canvas" width="900" height="600" onMouseDown="cueCharge(event)" onMouseUp="cueRelease(event)" onMouseMove="cueAim(event)" onMouseOut="cueRelease(event)">
 	</canvas>
-	<form>
-		<input type = "button" value = "×" onclick="moveNO();">
-	</form>
 </body>
 </html>
