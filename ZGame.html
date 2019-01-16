@@ -1,0 +1,251 @@
+<html>
+<head>
+	<title>Canvas & Mootools</title>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mootools/1.6.0/mootools-core.js"></script>
+	<script type="text/javascript">
+		var canvas, ctx, shapes, holes, idTimer, cueX, cueY, fric;
+		fric = 0.002;
+		
+		TBall = new Class({
+			initialize: function(pX,pY,group) {
+				this.posX = pX; //позиция шарика по X
+				this.posY = pY; //позиция шарика по Y
+				//цвет шарика, формируется случайным оьразом
+				this.colHue = group * 35;
+				this.col = 'hsl('+this.colHue+',100%,55%)';
+				this.size = 10;
+				this.spdX = 0;
+				this.spdY = 0;
+				this.group = group;
+			},
+			posX: 0,
+			posY: 0,
+			col:"rgb(0,0,0)",
+			size: 0,
+			group: 0,
+			draw : function(ctx){
+				// рисуем шарик на canvas
+				with (this){
+					ctx.fillStyle = this.col;
+					ctx.beginPath();
+					ctx.arc(posX, posY, size, 0, 2*Math.PI, false);
+					ctx.closePath();
+					ctx.fill();
+				}
+			}
+		});
+		
+		THole = new Class({
+			initialize: function(pX,pY) {
+				this.posX = pX; //позиция шарика по X
+				this.posY = pY; //позиция шарика по Y
+				//цвет шарика, формируется случайным оьразом
+				this.size = 20;
+			},
+			posX: 0,
+			posY: 0,
+			size: 0,
+			draw : function(ctx){
+				// рисуем шарик на canvas
+				with (this){
+					ctx.fillStyle = '#000';
+					ctx.beginPath();
+					ctx.arc(posX, posY, size, 0, 2*Math.PI, false);
+					ctx.closePath();
+					ctx.fill();
+				}
+			}
+		});
+		
+		function drawBack(ctx,col1,col2,w,h){
+			// закрашиваем канвас градиентным фоном
+			ctx.save();
+			var g = ctx.createLinearGradient(0,0,0,h);
+			g.addColorStop(1,col1);
+			g.addColorStop(0,col2);
+			ctx.fillStyle = g;
+			ctx.fillRect(0,0,w,h);
+			ctx.restore();
+		}
+		// инициализация работы
+		function init(){
+			canvas = document.getElementById('canvas');
+			if (canvas.getContext){
+				ctx = canvas.getContext('2d');
+				//рисуем фон
+				drawBack(ctx,'#202020','#101010',canvas.width,canvas.height);
+				//создаем 10 шариков, заноси их в массив и выводим на canvas
+				shapes = [];
+				holes = [];
+				for (var i = 1; i<=15;i++){
+					createShape();
+				}
+				
+				for (var i = 1; i<=6;i++){
+					createHole();
+				}
+			}
+		}
+		
+		// создаем новый шарик по щелчку мыши, добавляем его в массив шариков и рисуем его
+		function cueCharge(event){
+			cueX = event.clientX;
+			cueY = event.clientY;
+		}
+		
+		function cueRelease(event){
+			var distM = 10000;
+			var dirM = 0;
+			var nearest = -1;
+			for (var i = 0; i < shapes.length;i++){
+				var x1 = shapes[i].posX	;				
+				var y1 = shapes[i].posY;
+				
+				var x2 = cueX;
+				var y2 = cueY;
+				
+				var xd = Math.abs(x1 - x2);
+				if (xd > canvas.width) xd = canvas.width - xd;
+				
+				var yd = Math.abs(y1 - y2);
+				if (yd > canvas.width) yd = canvas.width - yd;
+				
+				var dist = Math.sqrt(Math.pow(xd, 2) + Math.pow(yd,2));
+				var dir = Math.atan2(yd, xd);
+				
+				if (dist < distM) {
+					distM = dist;
+					dirM = dir;
+					nearest = i;
+				}
+			}
+			
+			var x1 = shapes[nearest].posX	;				
+			var y1 = shapes[nearest].posY;
+			
+			var x2 = event.clientX;
+			var y2 = event.clientY;
+			
+			var xd = Math.abs(x1 - x2);
+			
+			var yd = Math.abs(y1 - y2);
+			
+			var dist = Math.sqrt(Math.pow(xd, 2) + Math.pow(yd,2));
+			var dir = Math.atan2(y2 - y1, x2 - x1);
+			
+			if (dist > 200) dist = 200;
+			
+			shapes[nearest].spdX = -Math.cos(dir) * distM * 0.1;
+			shapes[nearest].spdY = -Math.sin(dir) * distM * 0.1;
+			
+		}
+		
+		function createShape(x, y) {
+			var rng = Math.random();
+			var x = x || Math.random()*(canvas.width-30);
+			var y = y || Math.random()*(canvas.height-30);
+			var item = new TBall(x,y,Math.floor(Math.random()*10)+1);
+			item.draw(ctx);
+			shapes.push(item);
+		}
+		
+		function createHole(x, y) {
+			var rng = Math.random();
+			var x = x || Math.random()*(canvas.width-30);
+			var y = y || Math.random()*(canvas.height-30);
+			var item = new THole(x,y);
+			item.draw(ctx);
+			holes.push(item);
+		}
+		
+		function render(){
+			drawBack(ctx,'#202020','#101010',canvas.width,canvas.height);
+		
+			for (var i = 0; i < holes.length;i++)
+				holes[i].draw(ctx);
+		
+			for (var i = 0; i < shapes.length;i++)
+				shapes[i].draw(ctx);
+		}
+		
+		function moveBall(){
+			//реализация движения шариков, находящихся в массиве shapes
+			for (var i = 0; i < shapes.length;i++){
+				shapes[i].posX = shapes[i].posX + shapes[i].spdX;
+				shapes[i].posY = shapes[i].posY + shapes[i].spdY;
+				
+				shapes[i].posX = (shapes[i].posX + canvas.width) % canvas.width;
+				shapes[i].posY = (shapes[i].posY + canvas.height) % canvas.height;
+				
+				var x1 = shapes[i].posX					
+				var y1 = shapes[i].posY
+				
+				//Торможение
+				var spd = Math.sqrt(Math.pow(shapes[i].spdX, 2) + Math.pow(shapes[i].spdY,2));
+				var dir = Math.atan2(shapes[i].spdY, shapes[i].spdX);
+				
+				if (spd > fric) {
+					if (spd > fric * 2000)
+						spd = fric * 2000;
+					spd -= fric;
+					shapes[i].spdX = Math.cos(dir) * spd;
+					shapes[i].spdY = Math.sin(dir) * spd;
+				}
+				else {
+					shapes[i].spdX = 0;
+					shapes[i].spdY = 0;
+				}
+				
+				//Физика шаров
+				for (var j = 0; j < shapes.length;j++) if( i != j) {
+					var x2 = shapes[j].posX
+					var y2 = shapes[j].posY
+					
+					var dist = Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2,2));
+					var dir = Math.atan2(y2-y1, x2-x1);
+					
+					if (dist < shapes[i].size * 2) {
+					
+						var spdX = shapes[i].spdX + shapes[j].spdX 
+						var spdY = shapes[i].spdY + shapes[j].spdY 
+					
+						var spd = Math.sqrt(Math.pow(spdX, 2) + Math.pow(spdY,2));
+					
+						shapes[i].spdX = -Math.cos(dir) * spd / 2;
+						shapes[i].spdY = -Math.sin(dir) * spd / 2;
+						shapes[j].spdX = Math.cos(dir) * spd / 2;
+						shapes[j].spdY = Math.sin(dir) * spd / 2;
+					}
+				}
+			//Лунки
+				for (var j = 0; j < holes.length;j++) {	
+					if (Math.sqrt(Math.pow(holes[j].posX - x1,2)+Math.pow(holes[j].posY - y1,2)) < 20)
+						shapes.splice(i,1);
+				}		
+			}
+		}
+		
+		function moveNO(){
+			for (var i = 0; i < shapes.length;i++){
+				shapes[i].spdX = 0;
+				shapes[i].spdY = 0;
+			}
+			clearInterval(ChaosTimer);
+		}
+		
+	idTimer = setInterval('moveBall();',5);
+	rTimer = setInterval('render();',5);
+	
+	</script>
+	<style type="text/css">
+		canvas { border: 1px solid blue; }
+	</style>
+</head>
+<body onload="init();">
+	<canvas id="canvas" width="900" height="600" onMouseDown="cueCharge(event)" onMouseUp="cueRelease(event)";>
+	</canvas>
+	<form>
+		<input type = "button" value = "×" onclick="moveNO();">
+	</form>
+</body>
+</html>
