@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>JQWares</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+<body>
+	<script type="text/javascript">
+		const m = [
+			{
+				text: 'Животные',
+				children: [
+					{
+						text: 'Млекопитающие',
+						children: [
+							'Коровы',
+							'Ослы',
+							'Собаки',
+							'Тигры'
+						]
+					},
+					{
+						text: 'Другие',
+						children: [
+							'Змеи',
+							'Птицы',
+							'Ящерицы'
+						]
+					}
+				]
+			},
+			{
+				text: 'Рыбы',
+				children: [
+					{
+						text: 'Аквариумные',
+						children: [
+							'Гуппи',
+							'Скалярии'
+						]
+					},
+					{
+						text: 'Морские',
+						children: [
+							'Морская форель'
+						]
+					}
+				]
+			}
+		]	
+		
+		function list(children) 
+		{
+			var ul = $('<ul/>')
+			
+			for (var element of children) 
+			{
+				var li = $('<li/>')
+				
+				if (element.text !== undefined) 
+					li.append(element.text)
+				if (typeof element !== 'object')
+					li.append(element)
+				else if (element.children !== undefined) 
+					li.append(list(element.children))
+					
+				li.on('click', function(a) 
+				{
+					a.preventDefault()
+					$(this.firstElementChild).slideToggle()
+					console.log(this.firstChild.data, $(this).find("li").length)
+					return false
+				})
+				ul.append(li)
+			}
+			return ul
+		}
+		
+		$("body").append(list(m))
+	</script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Wares</title>
+</head>
+<body>
+	<script type="text/javascript">
+		var m = [
+			{
+				text: 'Животные',
+				children: [
+					{
+						text: 'Млекопитающие',
+						children: [
+							'Коровы',
+							'Ослы',
+							'Собаки',
+							'Тигры'
+						]
+					},
+					{
+						text: 'Другие',
+						children: [
+							'Змеи',
+							'Птицы',
+							'Ящерицы'
+						]
+					}
+				]
+			},
+			{
+				text: 'Рыбы',
+				children: [
+					{
+						text: 'Аквариумные',
+						children: [
+							'Гуппи',
+							'Скалярии'
+						]
+					},
+					{
+						text: 'Морские',
+						children: [
+							'Морская форель'
+						]
+					}
+				]
+			}
+		]
+		
+		function list(children) {
+			
+			var ul = document.createElement('ul')
+			for (var i of children) {
+				var li = document.createElement('li')
+				if (i.text !== undefined) 
+					li.append(i.text)
+				if (typeof i !== 'object')
+					li.append(i)
+				else if (i.children !== undefined) 
+					li.append(list(i.children))
+				ul.append(li)
+			}
+			return ul
+		}
+		
+		document.body.append(list(m))
+		
+		function log(element) {
+			if (element.childNodes == undefined) return
+			for (var node of element.childNodes) {
+				console.log(node.nodeName, node.nodeType, node.nodeValue)
+				log(node)
+			}
+		}
+		log(document)
+	</script>
+</body>
+</html>
