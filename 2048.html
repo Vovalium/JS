@@ -1,0 +1,280 @@
+<html>
+<head>
+	<title>Canvas & Mootools</title>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mootools/1.6.0/mootools-core.js"></script>
+	<script type="text/javascript">
+		tile = new Class({
+			initialize: function(pX,pY,num) {
+				this.x = pX;
+				this.y = pY;
+				this.n = num;
+			},
+			x: 0,
+			y: 0,
+			n: 0,
+			scale: 0,
+			dir: 0,
+			draw : function() {
+				var sat = 100;
+				
+				var lum = 50;
+				
+				var hue = 20 + Math.sqrt(this.n) * 5;
+				
+				if (this.scale <= 1.1) 
+					var size = Math.sin(this.scale * Math.PI * 0.5)
+				else
+					var size = (Math.sin((this.scale+3) * Math.PI * 0.5) + 1.5) / 2;
+				
+				rndRect(tiles[i].x*130+20+60*(1-size), tiles[i].y*130+170+60*(1-size), size*120, size*120,'hsl('+hue+', '+sat+'%, '+lum+'%)')
+				
+				ctx.font = "bold "+size*60+"px Arial";
+				ctx.fillStyle = 'hsl(250, 54%, 100%)';
+				ctx.fillText(this.n, this.x*130+80, this.y*130+250);
+			}
+		});
+			
+		var score = 0;
+		var scoreH = 0;
+		var tiles = [];
+		var blM = [1,1,1,1,1];
+		
+		function drawWindow() {
+			ctx = canvas.getContext('2d');
+			ctx.save();
+			rndRect(0,0,550,700,'hsl(250, 60%, 15%)');
+			
+			rndRect(10,160,530,530,'hsl(250, 54%, 57%)');
+			ctx.restore();
+			
+			for (var i = 0; i < 4; i++)
+				for (var j = 0; j < 4; j++) {
+					rndRect(i*130+20,j*130+170,120,120,'hsl(250, 54%, 67%)');
+				}
+				
+			rndRect(10,10,320,140,'hsl(250, 54%, 57%)');
+			
+			rndRect(340,10,200,65,'hsl(250, 54%, 57%)');
+			rndRect(340,85,200,65,'hsl(250, 54%, 57%)');
+			
+			ctx.textAlign = "center";
+				
+			ctx.font = "bold 100px Arial";
+			ctx.fillStyle = 'hsl(250, 54%, 100%)';
+			ctx.fillText("2048", 170, 130);
+			
+			ctx.font = "bold 30px Arial";
+			ctx.fillStyle = 'hsl(250, 54%, 77%)';
+			ctx.fillText("New Game", 170, 45);
+			
+			ctx.font = "bold 40px Arial";
+			ctx.fillStyle = 'hsl(250, 54%, 100%)';
+			ctx.fillText(score, 440, 65);
+			
+			ctx.font = "bold 20px Arial";
+			ctx.fillStyle = 'hsl(250, 54%, 77%)';
+			ctx.fillText("Score", 440, 30);
+			
+			ctx.font = "bold 40px Arial";
+			ctx.fillStyle = 'hsl(250, 54%, 100%)';
+			ctx.fillText(scoreH, 440, 140);
+			
+			ctx.font = "bold 20px Arial";
+			ctx.fillStyle = 'hsl(250, 54%, 77%)';
+			ctx.fillText("Best", 440, 105);
+		};
+		
+		function rndRect(pX, pY, pW, pH, colF) {
+			var size = (pW*0.05+10)/2;
+			ctx.fillStyle = colF;
+			ctx.strokeStyle = colF;
+			ctx.beginPath();
+			ctx.moveTo(pX+size, pY);
+			ctx.lineTo(pX+pW-size, pY);
+			ctx.quadraticCurveTo(pX+pW, pY, pX+pW, pY+size);
+			ctx.lineTo(pX+pW, pY+pH-size);
+			ctx.quadraticCurveTo(pX+pW, pY+pH, pX+pW-size, pY+pH);
+			ctx.lineTo(pX+size, pY+pH);
+			ctx.quadraticCurveTo(pX, pY+pH, pX, pY+pH-size);
+			ctx.lineTo(pX, pY+size);
+			ctx.quadraticCurveTo(pX, pY, pX+size, pY);
+			ctx.closePath();
+			ctx.fill();
+		};
+		
+		function stepF() {
+			drawWindow();
+			
+			for (i = 0; i < tiles.length; i ++) {
+				tiles[i].draw();
+				if (tiles[i].scale < 1)
+					tiles[i].scale += 0.05
+				else
+					tiles[i].scale -= 0.05
+				};
+				
+			if (blM[0] == 1) {
+				rndRect(100,200,350,150,'hsl(250, 54%, 57%)');	
+				
+				ctx.font = "bold 100px Arial";
+				ctx.fillStyle = 'hsl(250, 54%, 100%)';
+				ctx.fillText("2048", 275, 250)
+			};
+				
+			stepP();
+		};
+		
+		function stepP() {
+		for (i = 0; i < tiles.length; i ++) {	
+				if (tiles[i].dir > 0) {
+					tiles[i].x -= 0.1 * Math.round(Math.sin(Math.PI * tiles[i].dir * 0.5));
+					tiles[i].y += 0.1 * Math.round(Math.cos(Math.PI * tiles[i].dir * 0.5));
+				};
+				
+				if ((tiles[i].x < 0) || (tiles[i].x > 3) || (tiles[i].y < 0) || (tiles[i].y > 3)) {
+					tiles[i].dir = 0;
+					tiles[i].x = Math.round(tiles[i].x);
+					tiles[i].y = Math.round(tiles[i].y);
+				};
+				
+				for (j = 0; j < tiles.length; j ++) {
+					if ((tiles[i].n != tiles[j].n) && ((Math.abs(tiles[i].x - tiles[j].x) < 0.8) && (Math.abs(tiles[i].y - tiles[j].y) < 0.8))) {
+						tiles[i].dir = 0;
+						tiles[i].x = Math.round(tiles[i].x);
+						tiles[i].y = Math.round(tiles[i].y);
+					};
+
+					if ((tiles[i].n == tiles[j].n) && (j !== i) && (tiles[i].x == tiles[j].x) && (tiles[i].y == tiles[j].y)){
+						if (j > i) {
+							tiles.splice(j, 1);
+							var a = i;
+							j -= 1;
+							}
+						else {
+							tiles.splice(i, 1);
+							var a = j;
+							i -= 1;
+							};
+							
+						tiles[a].n *= 2;
+						tiles[a].dir = 0;
+						tiles[a].scale = 2;
+						score += tiles[a].n;
+						if (score > scoreH)
+							scoreH = score;
+					};
+				};
+			};
+			
+		//Check blocked moves
+		blM = [1,1,1,1,1];
+		for (i = 0; i < tiles.length; i ++) {	
+			if (tiles[i].x < 3) {
+				blM[0] = 0;
+				for (j = 0; j < tiles.length; j ++) 
+					if ((Math.abs(tiles[i].x+1 - tiles[j].x) < 0.3) && (Math.abs(tiles[i].y - tiles[j].y) < 0.3) && (tiles[i].n != tiles[j].n))
+						blM[0] = 1;
+				if (blM[3] == 1)
+					blM[3] = blM[0];
+				};
+			
+			if (tiles[i].x > 0) {
+				blM[0] = 0;
+				for (j = 0; j < tiles.length; j ++) 
+					if ((Math.abs(tiles[i].x-1 - tiles[j].x) < 0.3) && (Math.abs(tiles[i].y - tiles[j].y) < 0.3) && (tiles[i].n != tiles[j].n))
+						blM[0] = 1;
+				if (blM[1] == 1)
+					blM[1] = blM[0];
+				};			
+			
+			if (tiles[i].y < 3) {
+				blM[0] = 0;
+				for (j = 0; j < tiles.length; j ++) 
+					if ((Math.abs(tiles[i].x - tiles[j].x) < 0.3) && (Math.abs(tiles[i].y+1 - tiles[j].y) < 0.3) && (tiles[i].n != tiles[j].n))
+						blM[0] = 1;
+				if (blM[4] == 1)
+					blM[4] = blM[0];
+				};
+			
+			if (tiles[i].y > 0) {
+				blM[0] = 0;
+				for (j = 0; j < tiles.length; j ++) 
+					if ((Math.abs(tiles[i].x - tiles[j].x) < 0.3) && (Math.abs(tiles[i].y-1 - tiles[j].y) < 0.3) && (tiles[i].n != tiles[j].n))
+						blM[0] = 1;
+				if (blM[2] == 1)
+					blM[2] = blM[0];
+				};
+			};
+			blM[0] = 0;
+			if ((blM[1] == 1) && (blM[2] == 1) && (blM[3] == 1) && (blM[4] == 1)) {
+				blM[0] = 1; };
+		};
+		
+		function init() {
+			tiles = [];
+		
+			drawWindow();
+			
+			for (i = 0; i < tiles.length; i ++)
+				tiles[i].draw();
+				
+			for (i = 0; i < 2; i ++)
+				addTile();
+				
+		};
+		
+		function addTile() {
+			var free = 0;
+			while (free == 0) {
+				var x = Math.floor(Math.random()*4);
+				var y = Math.floor(Math.random()*4);
+				var free = 1;
+				for (i = 0; i < tiles.length; i ++){
+					if ((tiles[i].x == x) && (tiles[i].y == y)) 
+						free = 0					
+				};
+			}
+			item = new tile(x, y, 2);
+			tiles.push(item);
+		};
+		
+		function move(event) {
+			var charStr = event.keyCode;
+			
+			if ((charStr > 36) && (charStr < 41) && (blM[charStr - 36] == 0) && (blM[0] == 0)) {
+			
+				var stop = 0
+				while (stop == 0) {
+					stop = 1;
+					for (i = 0; i < tiles.length; i ++)
+						if (tiles[i].dir > 0) stop = 0;
+						
+					stepP();
+				};		
+
+				for (i = 0; i < tiles.length; i ++)
+					tiles[i].dir = (charStr - 36);
+				
+				if (tiles.length < 16)
+					addTile();
+			};
+		};
+		
+		function clickB(event) {
+			x = event.clientX;
+			y = event.clientY;
+			
+			if ((x>10) && (y>10) && (x<330) && (y<150))
+				init();
+		};
+		step = setInterval('stepF();',10);
+	</script>
+	<style type="text/css">
+		canvas
+	</style>
+</head>
+<body onload="init();" onkeydown="move(event);">
+	<canvas id="canvas" width="600" height="700" onclick="clickB(event);">
+	</canvas>
+</body>
+</html>
